@@ -15,19 +15,23 @@ class Application
     elsif req.path == "/people"
       return [201, { 'Content-Type' => 'application/json' }, [Person.all.to_json]]
 
-    # elsif req.path.match(/rounds/) && req.patch?
-    #  binding.pry
-      # id = req.path.split("/rounds/").last
-      # deletedRound = Round.find(id).destroy
-      # deletedRound.deletedRound
-      # deletedRound.person_rounds.destroy_all
-      # hash = JSON.parse(req.body.read)
-      # newArr = hash.delete("people_drinking")
-      # newRound = Round.create(hash)
-      # newArr.each{|el| PersonRound.create(round_id: newRound.id,person_id: el.to_i)}
-      # PersonRound.create(round_id:newRound.id, person_id:hash["person_id"].to_i)
-      # newRound.balance_splitter
-      # return [201, { 'Content-Type' => 'application/json' }, [newRound.to_json]]
+     elsif req.path.match("/rounds/") && req.patch?
+    
+      id = req.path.split("/rounds/").last
+      personPaying = Round.find(id).person_id
+      deletedR = Round.find(id).destroy
+      deletedR.deletedRound
+      people_drinking = deletedR.person_rounds.map{|pr| pr.person_id }
+      deletedR.person_rounds.destroy_all
+      hash = JSON.parse(req.body.read)
+      hash.merge!(person_id: personPaying)
+      newArr = people_drinking
+      newRound = Round.create(hash)
+      newArr.each{|el| PersonRound.create(round_id: newRound.id,person_id: el.to_i)}
+      # PersonRound.create(round_id:newRound.id, person_id:hash[:person_id].to_i)
+      newRound.balance_splitter
+      returnArr = [Round.all,PersonRound.all, Person.all]
+      return [201, { 'Content-Type' => 'application/json' }, [returnArr.to_json]]
 
     elsif req.path.match(/rounds/) && req.post?
     
@@ -47,6 +51,14 @@ class Application
       deletedRound.person_rounds.destroy_all
     elsif req.path == "/rounds"
       return [201, { 'Content-Type' => 'application/json' }, [Round.all.to_json]]
+    elsif req.path.match("/rounds") && req.get?
+      if req.path == "/rounds"
+        return [201, { 'Content-Type' => 'application/json' }, [Round.all.to_json]]
+      else  
+       
+        id = req.path.split("/rounds/").last
+        return [201, { 'Content-Type' => 'application/json' }, [Round.find(id.to_i).to_json]]
+      end
     elsif req.path == "/person_rounds"
       return [201, { 'Content-Type' => 'application/json' }, [PersonRound.all.to_json]]
     else
