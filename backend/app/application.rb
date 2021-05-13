@@ -41,14 +41,15 @@ class Application
       pr_arr = newArr.map{|el| PersonRound.create(round_id: newRound.id,person_id: el.to_i)}
       pr_arr << PersonRound.create(round_id:newRound.id, person_id:hash["person_id"].to_i)
       newRound.balance_splitter
-      roundPersonHash = [{newRound: newRound}, {person: Person.find(hash["person_id"].to_i)}]
-      roundPersonHash << pr_arr 
+      roundPersonHash = [Round.all,PersonRound.all, Person.all]
       return [201, { 'Content-Type' => 'application/json' }, [roundPersonHash.to_json]]
     elsif req.path.match(/rounds/) && req.delete?
       id = req.path.split("/rounds/").last
       deletedRound = Round.find(id).destroy
       deletedRound.deletedRound
       deletedRound.person_rounds.destroy_all
+      updatedAllDataArray = [Round.all,PersonRound.all, Person.all]
+      return [201, { 'Content-Type' => 'application/json' }, [updatedAllDataArray.to_json]]
     elsif req.path == "/rounds"
       return [201, { 'Content-Type' => 'application/json' }, [Round.all.to_json]]
     elsif req.path.match("/rounds") && req.get?
