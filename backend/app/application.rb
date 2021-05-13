@@ -12,11 +12,11 @@ class Application
       newPerson = Person.create(hash)
       return [201, { 'Content-Type' => 'application/json' }, [newPerson.to_json]]
 
-    elsif req.path=="/people"
+    elsif req.path == "/people"
       return [201, { 'Content-Type' => 'application/json' }, [Person.all.to_json]]
 
-    elsif req.path.match(/rounds/) && req.patch?
-     binding.pry
+    # elsif req.path.match(/rounds/) && req.patch?
+    #  binding.pry
       # id = req.path.split("/rounds/").last
       # deletedRound = Round.find(id).destroy
       # deletedRound.deletedRound
@@ -27,25 +27,27 @@ class Application
       # newArr.each{|el| PersonRound.create(round_id: newRound.id,person_id: el.to_i)}
       # PersonRound.create(round_id:newRound.id, person_id:hash["person_id"].to_i)
       # newRound.balance_splitter
-      return [201, { 'Content-Type' => 'application/json' }, [newRound.to_json]]
+      # return [201, { 'Content-Type' => 'application/json' }, [newRound.to_json]]
 
     elsif req.path.match(/rounds/) && req.post?
     
       hash = JSON.parse(req.body.read)
       newArr = hash.delete("people_drinking")
       newRound = Round.create(hash)
-      newArr.each{|el| PersonRound.create(round_id: newRound.id,person_id: el.to_i)}
-      PersonRound.create(round_id:newRound.id, person_id:hash["person_id"].to_i)
+      pr_arr = newArr.map{|el| PersonRound.create(round_id: newRound.id,person_id: el.to_i)}
+      pr_arr << PersonRound.create(round_id:newRound.id, person_id:hash["person_id"].to_i)
       newRound.balance_splitter
-      return [201, { 'Content-Type' => 'application/json' }, [newRound.to_json]]
+      roundPersonHash = [{newRound: newRound}, {person: Person.find(hash["person_id"].to_i)}]
+      roundPersonHash << pr_arr 
+      return [201, { 'Content-Type' => 'application/json' }, [roundPersonHash.to_json]]
     elsif req.path.match(/rounds/) && req.delete?
       id = req.path.split("/rounds/").last
       deletedRound = Round.find(id).destroy
       deletedRound.deletedRound
       deletedRound.person_rounds.destroy_all
-    elsif req.path=="/rounds"
+    elsif req.path == "/rounds"
       return [201, { 'Content-Type' => 'application/json' }, [Round.all.to_json]]
-    elsif req.path=="/person_rounds"
+    elsif req.path == "/person_rounds"
       return [201, { 'Content-Type' => 'application/json' }, [PersonRound.all.to_json]]
     else
       resp.write "Path Not Found"
